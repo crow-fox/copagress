@@ -1,0 +1,25 @@
+{
+  "name": "copagress",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "format": "biome format --write",
+    "lint": "biome lint"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.11",
+    "@vitest/browser-playwright": "^4.0.17",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.17"
+  },
+  "dependencies": {
+    "@remix-run/component": "^0.2.1",
+    "@remix-run/interaction": "^0.3.0"
+  }
+}
