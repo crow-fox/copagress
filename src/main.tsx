@@ -1,10 +1,8 @@
-import { createRoot, type Handle, type RemixNode } from "@remix-run/component";
+import { createRoot } from "@remix-run/component";
+import type { RemixComponent } from "./util";
 
-function App(this: Handle): () => RemixNode {
-	
-	return () => {
-		return <div>Welcome to copagress!</div>;
-	}
-}
+const App: RemixComponent = () => {
+	return () => <div>Welcome to copagress!</div>;
+};
 
 createRoot(document.body).render(<App />);
