@@ -1,0 +1,4 @@
+/* reset -> rmx(remixのcss propsで生成されるlayer)の順番を指定しないと、kisoがrmxの上に来てしまい、rmxのスタイルが効かなくなる。 */
+@layer reset, rmx;
+
+@import "kiso.css" layer(reset);

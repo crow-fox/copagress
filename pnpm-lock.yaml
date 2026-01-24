@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      kiso.css:
+        specifier: ^1.2.4
+        version: 1.2.4
       remix:
         specifier: 3.0.0-alpha.0
         version: 3.0.0-alpha.0(7026d63cd6a41d23c081ad944214d368)
@@ -609,6 +612,9 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  kiso.css@1.2.4:
+    resolution: {integrity: sha512-svHtRExh51oRPH9GQ/meutMUeztyFyJHH2YHt7If7fdvOyKImTCGNGIu48BudLouwcMldPz+80R7YBJJRy9aJQ==}
 
   lightningcss-android-arm64@1.30.2:
     resolution: {integrity: sha512-BH9sEdOCahSgmkVhBLeU7Hc9DWeZ1Eb6wNS6Da8igvUwAe0sqROHddIlvU06q3WyXVEOYDZ6ykBZQnjTbmo4+A==}
@@ -1328,6 +1334,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  kiso.css@1.2.4: {}
 
   lightningcss-android-arm64@1.30.2:
     optional: true
