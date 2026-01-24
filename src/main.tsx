@@ -1,4 +1,4 @@
-import { createRoot } from "@remix-run/component";
+import { createRoot } from "remix/component";
 import type { RemixComponent } from "./util";
 
 const App: RemixComponent = () => {

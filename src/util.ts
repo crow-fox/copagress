@@ -1,4 +1,4 @@
-import type { Handle, RemixNode } from "@remix-run/component";
+import type { Handle, RemixNode } from "remix/component";
 
 export type RemixComponent<
 	Setup = unknown,
