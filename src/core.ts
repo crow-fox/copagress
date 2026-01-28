@@ -1,7 +1,9 @@
-export type Markdown = {
+import { UnreachableError } from "./util";
+
+export type Markdown = Readonly<{
 	type: "markdown";
 	content: string;
-};
+}>;
 
 export function Markdown(content: string): Markdown {
 	return {
@@ -10,12 +12,22 @@ export function Markdown(content: string): Markdown {
 	};
 }
 
-export type Task = {
+export type Task = Readonly<{
 	project: string; // H1 のテキスト or ファイル名
 	status: string; // H2 のテキスト or "未定義"
 	title: string; // タスクのテキスト（先頭空白は削除）
 	markdownRow: number; // 元ドキュメント内の行番号（重複しないのでリスト表示のkeyにしようできる）ソートにも利用可能（orderの代わり）
-};
+}>;
+
+function taskFactory(overrides: Partial<Task> = {}): Task {
+	return {
+		project: "Default Project",
+		status: "未着手",
+		title: "Default Task",
+		markdownRow: 1,
+		...overrides,
+	};
+}
 
 export const parseMarkdownTasks = (
 	markdown: Markdown,
@@ -23,71 +35,436 @@ export const parseMarkdownTasks = (
 		defaultProject: string;
 		defaultStatus?: string;
 	},
-): Task[] => {
+): ReadonlyArray<Task> => {
 	const defaultStatus = options.defaultStatus ?? "未着手";
-	// markdownから、タスクを独自のロジックに基づいて、Task[]に変換する処理を実装してください。
-	const lines = markdown.content
-		// まずは行ごとに分割
-		.split("\n")
-		.map((line, index) => ({ line, row: index + 1 }) as const)
-		// パフォーマンスを考慮してreduceで１ループでいろんな処理をまとめて実行
-		.reduce<{ line: string; markdownRow: number }[]>((acc, { line, row }) => {
-			// 先頭と末尾の空白を削除
-			const trimmedLine = line.trim();
-			// 空行をスキップ
-			if (!trimmedLine) {
-				return acc;
-			}
-			// 必要な行は追加する
-			// 本来はここで、一気にTasksへの変換も実装するべき（パフォーマンス向上のため）
 
-			acc.push({ line: trimmedLine, markdownRow: row });
-			return acc;
-		}, []);
-
-	const { tasks } = lines.reduce<{
-		tasks: Task[];
-		current: {
-			project: string;
-			status: string;
-		};
-	}>(
-		(acc, current) => {
-			// #+" " で始まる行はプロジェクト名として扱う
-			const isProjectLine = /^# +/.test(current.line);
-			if (isProjectLine) {
-				// プロジェクト名を抽出して、現在のprojectに設定
-				acc.current.project = current.line.replace(/^# +/, "");
-				// ステータスをデフォルトにリセット
-				acc.current.status = defaultStatus;
-				return acc; // タスクではないので何も追加しない
-			}
-
-			// ##+" " で始まる行はステータス名として扱う
-			const isStatusLine = /^## +/.test(current.line);
-			if (isStatusLine) {
-				// ステータス名を抽出して、現在のstatusに設定
-				acc.current.status = current.line.replace(/^## +/, "");
-				return acc; // タスクではないので何も追加しない
-			}
-
-			// それ以外の行はタスクとして扱う
-			acc.tasks.push({
-				project: acc.current.project,
-				status: acc.current.status,
-				title: current.line,
-				markdownRow: current.markdownRow, // 行番号は1始まりにする
-			});
-			return acc;
-		},
-		{
-			tasks: [],
-			current: {
-				project: options.defaultProject,
-				status: defaultStatus,
-			},
-		},
+	// Markdownを行ごとに分割（その際に元の行番号も保持）
+	return (
+		splitMarkdownLines(markdown)
+			// 各行の前後の空白を削除
+			.map(trimLine)
+			// 空行を除去
+			.filter(isNonEmptyLine)
+			// 各行を順にパースして、対応した構造化されたデータに変換
+			.reduce(
+				markdownLineParseReducer({ defaultStatus }),
+				markdownLineParseReducerInitialAcc({
+					defaultProject: options.defaultProject,
+					defaultStatus,
+				}),
+			).tasks
 	);
-
-	return tasks;
 };
+
+type MarkdownLine = Readonly<{
+	text: string;
+	row: number;
+}>;
+
+function MarkdownLine(text: string, row: number): MarkdownLine {
+	return { text, row };
+}
+
+function splitMarkdownLines(markdown: Markdown): MarkdownLine[] {
+	return markdown.content
+		.split("\n")
+		.map((line, index) => MarkdownLine(line, index + 1));
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("splitMarkdownLines", () => {
+		test("Markdown文字列を行ごとにテキスト分割し、行番号を付与する", () => {
+			// 準備
+			const markdown = Markdown(markdownContent(["Line 1", "", "Line 2"]));
+			// 実行
+			const lines = splitMarkdownLines(markdown);
+			// 検証
+			expect(lines).toEqual([
+				MarkdownLine("Line 1", 1),
+				MarkdownLine("", 2),
+				MarkdownLine("Line 2", 3),
+			]);
+		});
+	});
+}
+
+function trimLine(line: MarkdownLine): MarkdownLine {
+	return {
+		...line,
+		text: line.text.trim(),
+	};
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("trimLine", () => {
+		test.each([
+			[MarkdownLine("  a", 1), MarkdownLine("a", 1)],
+			[MarkdownLine("b  ", 2), MarkdownLine("b", 2)],
+			[MarkdownLine("  c  ", 3), MarkdownLine("c", 3)],
+			[MarkdownLine("d", 4), MarkdownLine("d", 4)],
+			[MarkdownLine("    ", 5), MarkdownLine("", 5)],
+			[MarkdownLine("", 6), MarkdownLine("", 6)],
+		])("行の前後の空白を削除する (%o => %o)", (input, expected) => {
+			expect(trimLine(input)).toEqual(expected);
+		});
+	});
+}
+
+function isNonEmptyLine(line: MarkdownLine): boolean {
+	return line.text.trim() !== "";
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("isNonEmptyLine", () => {
+		test("空行でない場合にtrueを返す", () => {
+			const line = MarkdownLine("Some text", 1);
+			expect(isNonEmptyLine(line)).toBe(true);
+		});
+
+		test("空行の場合にfalseを返す", () => {
+			const line: MarkdownLine = { text: "", row: 1 };
+			expect(isNonEmptyLine(line)).toBe(false);
+		});
+	});
+}
+
+function getProject(line: MarkdownLine): string | undefined {
+	if (line.text.startsWith("# ")) {
+		return line.text.slice(2);
+	}
+	return undefined;
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("getProject", () => {
+		test.each([
+			["# My Project", "My Project"],
+			["# # Another Project", "# Another Project"],
+		] as const)("行がH1見出し(%s)の場合、行頭の[# ] を除いた文字列(%s)をプロジェクトとして返す", (input, expected) => {
+			const line = MarkdownLine(input, 1);
+			expect(getProject(line)).toEqual(expected);
+		});
+
+		test.each([
+			"## Not a Project",
+			"### Also Not a Project",
+			"- Not a Project",
+			"Just some text",
+			"",
+		] as const)("行がH1見出しでない（%s）場合、undefinedを返す", (input) => {
+			const line = MarkdownLine(input, 2);
+			expect(getProject(line)).toEqual(undefined);
+		});
+	});
+}
+
+function getStatus(line: MarkdownLine): string | undefined {
+	if (line.text.startsWith("## ")) {
+		return line.text.slice(3);
+	}
+	return undefined;
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("getStatus", () => {
+		test.each([
+			["## In Progress", "In Progress"],
+			["## ## Another Status", "## Another Status"],
+		] as const)("行がH2見出し(%s)の場合、行頭の[## ] を除いた文字列(%s)をステータスとして返す", (input, expected) => {
+			const line = MarkdownLine(input, 1);
+			expect(getStatus(line)).toEqual(expected);
+		});
+
+		test.each([
+			"# Not a Status",
+			"### Also Not a Status",
+			"- Not a Status",
+			"Just some text",
+			"",
+		] as const)("行がH2見出しでない（%s）場合、undefinedを返す", (input) => {
+			const line = MarkdownLine(input, 2);
+			expect(getStatus(line)).toEqual(undefined);
+		});
+	});
+}
+
+// MarkdownLineから必要な役割の行を抽出する関数
+type ParsedMarkdownLine =
+	| { type: "project"; title: string }
+	| { type: "status"; title: string }
+	| { type: "task"; title: string };
+
+function parseMarkdownLine(line: MarkdownLine): ParsedMarkdownLine {
+	{
+		const project = getProject(line);
+		if (project) {
+			return { type: "project", title: project };
+		}
+	}
+	{
+		const status = getStatus(line);
+		if (status) {
+			return { type: "status", title: status };
+		}
+	}
+	return { type: "task", title: line.text };
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("parseMarkdownLine", () => {
+		test("H1見出しの行をプロジェクト行としてパースする", () => {
+			const line = MarkdownLine("# Project A", 1);
+			const parsed = parseMarkdownLine(line);
+			expect(parsed).toEqual({ type: "project", title: "Project A" });
+		});
+
+		test("H2見出しの行をステータス行としてパースする", () => {
+			const line = MarkdownLine("## In Progress", 2);
+			const parsed = parseMarkdownLine(line);
+			expect(parsed).toEqual({ type: "status", title: "In Progress" });
+		});
+
+		test("その他の行をタスク行としてパースする", () => {
+			const lines = ["- Task 1", "Complete the report"].map((text, index) =>
+				MarkdownLine(text, index + 1),
+			);
+			for (const line of lines) {
+				const parsed = parseMarkdownLine(line);
+				expect(parsed).toEqual({ type: "task", title: line.text });
+			}
+		});
+	});
+}
+
+type MarkdownLineParseReducerAcc = {
+	tasks: Task[];
+	current: {
+		project: string;
+		status: string;
+	};
+};
+
+function markdownLineParseReducerInitialAcc({
+	defaultProject,
+	defaultStatus,
+}: {
+	defaultProject: string;
+	defaultStatus: string;
+}): MarkdownLineParseReducerAcc {
+	return {
+		tasks: [],
+		current: {
+			project: defaultProject,
+			status: defaultStatus,
+		},
+	};
+}
+
+function markdownLineParseReducer({
+	defaultStatus,
+}: {
+	defaultStatus: string;
+}) {
+	return (
+		acc: MarkdownLineParseReducerAcc,
+		line: MarkdownLine,
+	): MarkdownLineParseReducerAcc => {
+		const parsed = parseMarkdownLine(line);
+
+		switch (parsed.type) {
+			case "project": {
+				return {
+					tasks: acc.tasks,
+					current: {
+						project: parsed.title,
+						status: defaultStatus,
+					},
+				};
+			}
+			case "status": {
+				return {
+					tasks: acc.tasks,
+					current: {
+						...acc.current,
+						status: parsed.title,
+					},
+				};
+			}
+			case "task": {
+				return {
+					tasks: [
+						...acc.tasks,
+						{
+							project: acc.current.project,
+							status: acc.current.status,
+							title: line.text,
+							markdownRow: line.row,
+						},
+					],
+					current: acc.current,
+				};
+			}
+			default:
+				throw new UnreachableError(parsed);
+		}
+	};
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("markdownLineParseReducer", () => {
+		test("Accumulatorの初期値を正しく設定する", () => {
+			const defaultProject = "プロジェクト名";
+			const defaultStatus = "ステータス名";
+			const initialAcc = markdownLineParseReducerInitialAcc({
+				defaultProject,
+				defaultStatus,
+			});
+			expect(initialAcc).toEqual({
+				tasks: [],
+				current: {
+					project: defaultProject,
+					status: defaultStatus,
+				},
+			});
+		});
+
+		test("Accumulatorにタスクを追加する", () => {
+			const firstTask = taskFactory({
+				project: "今のプロジェクト",
+				status: "今のステータス",
+				title: "既存のタスク",
+				markdownRow: 1,
+			});
+			const currentAcc: MarkdownLineParseReducerAcc = {
+				tasks: [firstTask],
+				current: {
+					project: "今のプロジェクト",
+					status: "今のステータス",
+				},
+			};
+			const line = MarkdownLine("タスク1", 3);
+			const reducer = markdownLineParseReducer({
+				defaultStatus: "初期ステータス",
+			});
+			const newAcc = reducer(currentAcc, line);
+			expect(newAcc).toEqual({
+				tasks: [
+					firstTask,
+					taskFactory({
+						project: "今のプロジェクト",
+						status: "今のステータス",
+						title: "タスク1",
+						markdownRow: 3,
+					}),
+				],
+				current: {
+					project: "今のプロジェクト",
+					status: "今のステータス",
+				},
+			});
+		});
+
+		test("プロジェクト行で現在のプロジェクトを更新して、ステータスを初期化する", () => {
+			const firstTask = taskFactory({
+				project: "古いプロジェクト",
+				status: "今のステータス",
+				title: "タスク1",
+				markdownRow: 2,
+			});
+			const currentAcc: MarkdownLineParseReducerAcc = {
+				tasks: [firstTask],
+				current: {
+					project: "古いプロジェクト",
+					status: "今のステータス",
+				},
+			};
+			const line = MarkdownLine("# 新しいプロジェクト", 1);
+			const reducer = markdownLineParseReducer({
+				defaultStatus: "初期ステータス",
+			});
+			const newAcc = reducer(currentAcc, line);
+			expect(newAcc).toEqual({
+				tasks: [firstTask],
+				current: {
+					project: "新しいプロジェクト",
+					status: "初期ステータス",
+				},
+			});
+		});
+
+		test("ステータス行で現在のステータスを更新する", () => {
+			const firstTask = taskFactory({
+				project: "今のプロジェクト",
+				status: "古いステータス",
+				title: "タスク1",
+				markdownRow: 2,
+			});
+			const currentAcc: MarkdownLineParseReducerAcc = {
+				tasks: [firstTask],
+				current: {
+					project: "今のプロジェクト",
+					status: "古いステータス",
+				},
+			};
+			const line = MarkdownLine("## 新しいステータス", 1);
+			const reducer = markdownLineParseReducer({
+				defaultStatus: "初期ステータス",
+			});
+			const newAcc = reducer(currentAcc, line);
+			expect(newAcc).toEqual({
+				tasks: [firstTask],
+				current: {
+					project: "今のプロジェクト",
+					status: "新しいステータス",
+				},
+			});
+		});
+	});
+}
+
+// テスト用のMarkdownコンテンツを作成するユーティリティ関数
+// markdownを``で囲むと見づらいので、配列で行ごとに与えて結合する形式にする
+function markdownContent(lines: string[]): string {
+	return lines.join("\n");
+}
+
+if (import.meta.vitest) {
+	const { describe, test, expect } = import.meta.vitest;
+
+	describe("markdownContent", () => {
+		test("複数行の文字列配列を結合してMarkdownコンテンツを作成できる", () => {
+			// 準備
+			const lines = [
+				"# 見出し1",
+				"",
+				"## 見出し2",
+				"段落",
+				"- リストアイテム1",
+				"- リストアイテム2",
+			];
+			// 実行
+			const content = markdownContent(lines);
+			// 検証
+			expect(content).toEqual(`# 見出し1
+
+## 見出し2
+段落
+- リストアイテム1
+- リストアイテム2`);
+		});
+	});
+}
