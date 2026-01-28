@@ -15,10 +15,11 @@ export function Markdown(content: string): Markdown {
 export type TaskStatus = Readonly<{
 	// 拡張できるように、object型で定義しておく
 	name: string;
+	symbol: string; // 例: ✅のような絵文字　// 空文字は未設定を意味する
 }>;
 
-export function TaskStatus(name: string): TaskStatus {
-	return { name };
+export function TaskStatus(name: string, symbol: string = ""): TaskStatus {
+	return { name, symbol };
 }
 
 export type Task = Readonly<{
@@ -31,7 +32,7 @@ export type Task = Readonly<{
 function taskFactory(overrides: Partial<Task> = {}): Task {
 	return {
 		project: "Default Project",
-		status: TaskStatus("未着手"),
+		status: TaskStatus("未着手", "🔲"),
 		title: "Default Task",
 		markdownRow: 1,
 		...overrides,
