@@ -12,6 +12,15 @@ export function Markdown(content: string): Markdown {
 	};
 }
 
+export type TaskProject = Readonly<{
+	// 拡張できるように、object型で定義しておく
+	name: string;
+}>;
+
+export function TaskProject(name: string): TaskProject {
+	return { name };
+}
+
 export type TaskStatus = Readonly<{
 	// 拡張できるように、object型で定義しておく
 	name: string;
@@ -23,7 +32,7 @@ export function TaskStatus(name: string, symbol: string = ""): TaskStatus {
 }
 
 export type Task = Readonly<{
-	project: string; // H1 のテキスト or ファイル名
+	project: TaskProject; // H1 のテキスト or ファイル名
 	status: TaskStatus; // H2 のテキスト or "未定義"
 	title: string; // タスクのテキスト（先頭空白は削除）
 	markdownRow: number; // 元ドキュメント内の行番号（重複しないのでリスト表示のkeyにしようできる）ソートにも利用可能（orderの代わり）
@@ -31,7 +40,7 @@ export type Task = Readonly<{
 
 function taskFactory(overrides: Partial<Task> = {}): Task {
 	return {
-		project: "Default Project",
+		project: TaskProject("Default Project"),
 		status: TaskStatus("未着手", "🔲"),
 		title: "Default Task",
 		markdownRow: 1,
@@ -42,7 +51,7 @@ function taskFactory(overrides: Partial<Task> = {}): Task {
 export const parseMarkdownTasks = (
 	markdown: Markdown,
 	options: {
-		defaultProject: string;
+		defaultProject: TaskProject;
 		defaultStatus?: TaskStatus;
 	},
 ): ReadonlyArray<Task> => {
@@ -144,9 +153,9 @@ if (import.meta.vitest) {
 	});
 }
 
-function getProject(line: MarkdownLine): string | undefined {
+function getProject(line: MarkdownLine): TaskProject | undefined {
 	if (line.text.startsWith("# ")) {
-		return line.text.slice(2);
+		return TaskProject(line.text.slice(2));
 	}
 	return undefined;
 }
@@ -156,9 +165,9 @@ if (import.meta.vitest) {
 
 	describe("getProject", () => {
 		test.each([
-			["# My Project", "My Project"],
-			["# # Another Project", "# Another Project"],
-		] as const)("行がH1見出し(%s)の場合、行頭の[# ] を除いた文字列(%s)をプロジェクトとして返す", (input, expected) => {
+			["# My Project", TaskProject("My Project")],
+			["# # Another Project", TaskProject("# Another Project")],
+		] as const)("行がH1見出し(%s)の場合、行頭の[# ] を除いた文字列(%s)の名前のプロジェクトを返す", (input, expected) => {
 			const line = MarkdownLine(input, 1);
 			expect(getProject(line)).toEqual(expected);
 		});
@@ -231,7 +240,7 @@ if (import.meta.vitest) {
 
 // MarkdownLineから必要な役割の行を抽出する関数
 type ParsedMarkdownLine =
-	| { type: "project"; title: string }
+	| { type: "project"; project: TaskProject }
 	| { type: "status"; status: TaskStatus }
 	| { type: "task"; title: string };
 
@@ -239,7 +248,7 @@ function parseMarkdownLine(line: MarkdownLine): ParsedMarkdownLine {
 	{
 		const project = getProject(line);
 		if (project) {
-			return { type: "project", title: project };
+			return { type: "project", project };
 		}
 	}
 	{
@@ -258,7 +267,10 @@ if (import.meta.vitest) {
 		test("H1見出しの行をプロジェクト行としてパースする", () => {
 			const line = MarkdownLine("# Project A", 1);
 			const parsed = parseMarkdownLine(line);
-			expect(parsed).toEqual({ type: "project", title: "Project A" });
+			expect(parsed).toEqual({
+				type: "project",
+				project: TaskProject("Project A"),
+			});
 		});
 
 		test("H2見出しの行をステータス行としてパースする", () => {
@@ -285,7 +297,7 @@ if (import.meta.vitest) {
 type MarkdownLineParseReducerAcc = {
 	tasks: Task[];
 	current: {
-		project: string;
+		project: TaskProject;
 		status: TaskStatus;
 	};
 };
@@ -294,7 +306,7 @@ function markdownLineParseReducerInitialAcc({
 	defaultProject,
 	defaultStatus,
 }: {
-	defaultProject: string;
+	defaultProject: TaskProject;
 	defaultStatus: TaskStatus;
 }): MarkdownLineParseReducerAcc {
 	return {
@@ -322,7 +334,7 @@ function markdownLineParseReducer({
 				return {
 					tasks: acc.tasks,
 					current: {
-						project: parsed.title,
+						project: parsed.project,
 						status: defaultStatus,
 					},
 				};
@@ -361,7 +373,7 @@ if (import.meta.vitest) {
 
 	describe("markdownLineParseReducer", () => {
 		test("Accumulatorの初期値を正しく設定する", () => {
-			const defaultProject = "プロジェクト名";
+			const defaultProject = TaskProject("プロジェクト名");
 			const defaultStatus = TaskStatus("ステータス名");
 			const initialAcc = markdownLineParseReducerInitialAcc({
 				defaultProject,
@@ -378,7 +390,7 @@ if (import.meta.vitest) {
 
 		test("Accumulatorにタスクを追加する", () => {
 			const firstTask = taskFactory({
-				project: "今のプロジェクト",
+				project: TaskProject("今のプロジェクト"),
 				status: TaskStatus("今のステータス"),
 				title: "既存のタスク",
 				markdownRow: 1,
@@ -386,7 +398,7 @@ if (import.meta.vitest) {
 			const currentAcc: MarkdownLineParseReducerAcc = {
 				tasks: [firstTask],
 				current: {
-					project: "今のプロジェクト",
+					project: TaskProject("今のプロジェクト"),
 					status: TaskStatus("今のステータス"),
 				},
 			};
@@ -399,14 +411,14 @@ if (import.meta.vitest) {
 				tasks: [
 					firstTask,
 					taskFactory({
-						project: "今のプロジェクト",
+						project: TaskProject("今のプロジェクト"),
 						status: TaskStatus("今のステータス"),
 						title: "タスク1",
 						markdownRow: 3,
 					}),
 				],
 				current: {
-					project: "今のプロジェクト",
+					project: TaskProject("今のプロジェクト"),
 					status: TaskStatus("今のステータス"),
 				},
 			});
@@ -414,7 +426,7 @@ if (import.meta.vitest) {
 
 		test("プロジェクト行で現在のプロジェクトを更新して、ステータスを初期化する", () => {
 			const firstTask = taskFactory({
-				project: "古いプロジェクト",
+				project: TaskProject("古いプロジェクト"),
 				status: TaskStatus("今のステータス"),
 				title: "タスク1",
 				markdownRow: 2,
@@ -422,7 +434,7 @@ if (import.meta.vitest) {
 			const currentAcc: MarkdownLineParseReducerAcc = {
 				tasks: [firstTask],
 				current: {
-					project: "古いプロジェクト",
+					project: TaskProject("古いプロジェクト"),
 					status: TaskStatus("今のステータス"),
 				},
 			};
@@ -434,7 +446,7 @@ if (import.meta.vitest) {
 			expect(newAcc).toEqual({
 				tasks: [firstTask],
 				current: {
-					project: "新しいプロジェクト",
+					project: TaskProject("新しいプロジェクト"),
 					status: TaskStatus("初期ステータス"),
 				},
 			});
@@ -442,7 +454,7 @@ if (import.meta.vitest) {
 
 		test("ステータス行で現在のステータスを更新する", () => {
 			const firstTask = taskFactory({
-				project: "今のプロジェクト",
+				project: TaskProject("今のプロジェクト"),
 				status: TaskStatus("古いステータス"),
 				title: "タスク1",
 				markdownRow: 2,
@@ -450,7 +462,7 @@ if (import.meta.vitest) {
 			const currentAcc: MarkdownLineParseReducerAcc = {
 				tasks: [firstTask],
 				current: {
-					project: "今のプロジェクト",
+					project: TaskProject("今のプロジェクト"),
 					status: TaskStatus("古いステータス"),
 				},
 			};
@@ -462,7 +474,7 @@ if (import.meta.vitest) {
 			expect(newAcc).toEqual({
 				tasks: [firstTask],
 				current: {
-					project: "今のプロジェクト",
+					project: TaskProject("今のプロジェクト"),
 					status: TaskStatus("新しいステータス"),
 				},
 			});
