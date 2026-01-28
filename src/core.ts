@@ -177,10 +177,22 @@ if (import.meta.vitest) {
 }
 
 function getStatus(line: MarkdownLine): TaskStatus | undefined {
-	if (line.text.startsWith("## ")) {
-		return TaskStatus(line.text.slice(3));
+	// H2見出しでなければundefinedを返す
+	if (!line.text.startsWith("## ")) {
+		return undefined;
 	}
-	return undefined;
+	const body = line.text.slice(3); // "## " の後ろの部分
+
+	if (body.startsWith("[") && body.includes("]")) {
+		// [何か] があるパターン
+		const symbolEndIndex = body.indexOf("]");
+		const symbol = body.slice(1, symbolEndIndex);
+		const name = body.slice(symbolEndIndex + 1).trim();
+		return TaskStatus(name, symbol);
+	}
+
+	// [何か] がないパターン // あえてtrimはせずにそのまま渡す
+	return TaskStatus(body);
 }
 
 if (import.meta.vitest) {
@@ -188,9 +200,18 @@ if (import.meta.vitest) {
 
 	describe("getStatus", () => {
 		test.each([
+			["## [✅] Done", TaskStatus("Done", "✅")],
+			["## [❌]  Not Done", TaskStatus("Not Done", "❌")],
+		] as const)("行がH2見出しで[絵文字]が最初にある(%s)の場合、[絵文字]をシンボルに、[絵文字]以降を名前として返す", (input, expected) => {
+			const line = MarkdownLine(input, 1);
+			expect(getStatus(line)).toEqual(expected);
+		});
+
+		test.each([
 			["## In Progress", "In Progress"],
 			["## ## Another Status", "## Another Status"],
-		] as const)("行がH2見出し(%s)の場合、行頭の[## ] を除いた文字列(%s)をステータスとして返す", (input, expected) => {
+			["## [が閉じていない", "[が閉じていない"],
+		] as const)("行がH2見出しで[絵文字]が最初にない(%s)場合、行頭の[## ] を除いた文字列を名前として返す", (input, expected) => {
 			const line = MarkdownLine(input, 1);
 			expect(getStatus(line)).toEqual(TaskStatus(expected));
 		});

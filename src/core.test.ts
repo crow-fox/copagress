@@ -159,9 +159,9 @@ test("Taskの行番号は元のMarkdownの行番号と一致する", () => {
 
 test("複数のプロジェクトとステータスを含むMarkdownを正しくパースできる", () => {
 	// 準備
-	const markdownContent = `# プロジェクトA
+	const markdownContent = `	# プロジェクトA
 
-## 未着手
+## [✖️] 未着手
 タスク1
 
 ## 完了
@@ -190,7 +190,7 @@ test("複数のプロジェクトとステータスを含むMarkdownを正しく
 			project: "プロジェクトA",
 			status: {
 				name: "未着手",
-				symbol: "",
+				symbol: "✖️",
 			},
 			title: "タスク1",
 			markdownRow: 4,
