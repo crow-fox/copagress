@@ -2,13 +2,30 @@ import { UnreachableError } from "./util";
 
 export type Markdown = Readonly<{
 	type: "markdown";
+	filename: string; // .mdは不要
 	content: string;
 }>;
 
-export function Markdown(content: string): Markdown {
+export function Markdown({
+	filename,
+	content,
+}: {
+	filename: string;
+	content: string;
+}): Markdown {
 	return {
 		type: "markdown",
+		filename,
 		content,
+	};
+}
+
+export function markdownFactory(overrides: Partial<Markdown> = {}): Markdown {
+	return {
+		type: "markdown",
+		filename: "default",
+		content: "",
+		...overrides,
 	};
 }
 
@@ -96,7 +113,9 @@ if (import.meta.vitest) {
 	describe("splitMarkdownLines", () => {
 		test("Markdown文字列を行ごとにテキスト分割し、行番号を付与する", () => {
 			// 準備
-			const markdown = Markdown(markdownContent(["Line 1", "", "Line 2"]));
+			const markdown = markdownFactory({
+				content: markdownContent(["Line 1", "", "Line 2"]),
+			});
 			// 実行
 			const lines = splitMarkdownLines(markdown);
 			// 検証
