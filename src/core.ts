@@ -35,7 +35,7 @@ export type Task = Readonly<{
 	project: TaskProject; // H1 のテキスト or ファイル名
 	status: TaskStatus; // H2 のテキスト or "未定義"
 	title: string; // タスクのテキスト（先頭空白は削除）
-	markdownRow: number; // 元ドキュメント内の行番号（重複しないのでリスト表示のkeyにしようできる）ソートにも利用可能（orderの代わり）
+	markdownLineNum: number; // 元ドキュメント内の行番号（重複しないのでリスト表示のkeyにしようできる）ソートにも利用可能（orderの代わり）
 }>;
 
 function taskFactory(overrides: Partial<Task> = {}): Task {
@@ -43,7 +43,7 @@ function taskFactory(overrides: Partial<Task> = {}): Task {
 		project: TaskProject("Default Project"),
 		status: TaskStatus("未着手", "🔲"),
 		title: "Default Task",
-		markdownRow: 1,
+		markdownLineNum: 1,
 		...overrides,
 	};
 }
@@ -77,11 +77,11 @@ export const parseMarkdownTasks = (
 
 type MarkdownLine = Readonly<{
 	text: string;
-	row: number;
+	num: number;
 }>;
 
-function MarkdownLine(text: string, row: number): MarkdownLine {
-	return { text, row };
+function MarkdownLine(text: string, num: number): MarkdownLine {
+	return { text, num };
 }
 
 function splitMarkdownLines(markdown: Markdown): MarkdownLine[] {
@@ -147,7 +147,7 @@ if (import.meta.vitest) {
 		});
 
 		test("空行の場合にfalseを返す", () => {
-			const line: MarkdownLine = { text: "", row: 1 };
+			const line: MarkdownLine = { text: "", num: 1 };
 			expect(isNonEmptyLine(line)).toBe(false);
 		});
 	});
@@ -356,7 +356,7 @@ function markdownLineParseReducer({
 							project: acc.current.project,
 							status: acc.current.status,
 							title: line.text,
-							markdownRow: line.row,
+							markdownLineNum: line.num,
 						},
 					],
 					current: acc.current,
@@ -393,7 +393,7 @@ if (import.meta.vitest) {
 				project: TaskProject("今のプロジェクト"),
 				status: TaskStatus("今のステータス"),
 				title: "既存のタスク",
-				markdownRow: 1,
+				markdownLineNum: 1,
 			});
 			const currentAcc: MarkdownLineParseReducerAcc = {
 				tasks: [firstTask],
@@ -414,7 +414,7 @@ if (import.meta.vitest) {
 						project: TaskProject("今のプロジェクト"),
 						status: TaskStatus("今のステータス"),
 						title: "タスク1",
-						markdownRow: 3,
+						markdownLineNum: 3,
 					}),
 				],
 				current: {
@@ -429,7 +429,7 @@ if (import.meta.vitest) {
 				project: TaskProject("古いプロジェクト"),
 				status: TaskStatus("今のステータス"),
 				title: "タスク1",
-				markdownRow: 2,
+				markdownLineNum: 2,
 			});
 			const currentAcc: MarkdownLineParseReducerAcc = {
 				tasks: [firstTask],
@@ -457,7 +457,7 @@ if (import.meta.vitest) {
 				project: TaskProject("今のプロジェクト"),
 				status: TaskStatus("古いステータス"),
 				title: "タスク1",
-				markdownRow: 2,
+				markdownLineNum: 2,
 			});
 			const currentAcc: MarkdownLineParseReducerAcc = {
 				tasks: [firstTask],
