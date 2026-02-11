@@ -455,7 +455,7 @@ export function parseMarkdown(markdown: Markdown): Doc {
 						// 新しいprojectを作ってprojectsに追加し、stateにセットする
 						const newProject: FallbackProject = {
 							type: "fallback",
-							name: "Fallback Project",
+							name: markdown.filename,
 							statuses: [newStatus],
 						};
 						acc.projects.push(newProject);
@@ -491,7 +491,7 @@ export function parseMarkdown(markdown: Markdown): Doc {
 						// 新しいprojectを作ってprojectsに追加し、stateにセットする
 						const newProject: FallbackProject = {
 							type: "fallback",
-							name: "Fallback Project",
+							name: markdown.filename,
 							statuses: [fallbackStatus([newTask])],
 						};
 						acc.projects.push(newProject);
