@@ -384,7 +384,15 @@ if (import.meta.vitest) {
 
 // 最終的に Markdown -> Doc に変換する関数
 
-export function parseMarkdown(markdown: Markdown): Doc {
+export function parseMarkdown(
+	markdown: Markdown,
+	options: {
+		fallbackStatus: {
+			name: string;
+			symbol: string | null;
+		};
+	},
+): Doc {
 	const markdownLines = parseMarkdownToMarkdownLines(markdown);
 
 	if (markdownLines.length === 0) {
@@ -394,8 +402,8 @@ export function parseMarkdown(markdown: Markdown): Doc {
 	function fallbackStatus(tasks: ReadonlyArray<ParsedTask>): FallbackStatus {
 		return {
 			type: "fallback",
-			name: "Fallback Status",
-			symbol: null,
+			name: options.fallbackStatus.name,
+			symbol: options.fallbackStatus.symbol,
 			tasks,
 		};
 	}
@@ -506,15 +514,9 @@ export function parseMarkdown(markdown: Markdown): Doc {
 					);
 					if (!currentStatus) {
 						// statusが存在しない場合はfallback statusを作ってそこにtaskを追加する
-						const fallbackStatus: FallbackStatus = {
-							type: "fallback",
-							name: "Fallback Status",
-							symbol: null,
-							tasks: [newTask],
-						};
 						const updatedProject: Project = {
 							...currentProject,
-							statuses: [fallbackStatus],
+							statuses: [fallbackStatus([newTask])],
 						};
 						acc.projects = acc.projects.with(
 							acc.projects.length - 1,
