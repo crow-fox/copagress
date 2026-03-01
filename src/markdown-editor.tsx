@@ -4,12 +4,35 @@ import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Markdown } from "./markdown.ts";
+import styles from "./markdown-editor.module.css";
 
 type Props = {
 	initialValue: Markdown;
 	onChange: (markdown: Markdown) => void;
 	onSave: (markdown: Markdown) => void;
 };
+
+const monochromeTheme = EditorView.theme({
+	"&": {
+		height: "100svh",
+		backgroundColor: "#ffffff",
+		color: "#111111",
+		fontSize: "14px",
+		fontFamily: "sans-serif",
+		lineHeight: "1.75",
+	},
+	".cm-content": {
+		padding: "8px",
+	},
+	".cm-gutters": {
+		backgroundColor: "#fafafa",
+		color: "#6b7280",
+		borderRight: "1px solid #e5e7eb",
+	},
+	".cm-activeLine, .cm-activeLineGutter": {
+		backgroundColor: "#f3f4f6",
+	},
+});
 
 export function MarkdownEditor({ initialValue, onChange, onSave }: Props) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +48,7 @@ export function MarkdownEditor({ initialValue, onChange, onSave }: Props) {
 				basicSetup,
 				markdown(),
 				EditorView.lineWrapping,
+				monochromeTheme,
 				keymap.of([
 					{
 						key: "Mod-s",
@@ -56,5 +80,9 @@ export function MarkdownEditor({ initialValue, onChange, onSave }: Props) {
 		};
 	}, [onChange, onSave, initMarkdown.content, initMarkdown.filename]); // defaultValueを依存配列に追加
 
-	return <div ref={containerRef} />;
+	return (
+		<div className={styles.wrapper}>
+			<div className={styles.editor} ref={containerRef} />
+		</div>
+	);
 }

@@ -3,18 +3,14 @@ import { MarkdownEditor } from "./markdown-editor.tsx";
 import { useMarkdownStorage } from "./markdown-store.ts";
 import { MarkdownView } from "./markdown-view.tsx";
 import "./global.css";
+import styles from "./main.module.css";
 
 function App() {
 	const [markdown, setMarkdown] = useMarkdownStorage();
 
 	return (
-		<div
-			style={{
-				display: "grid",
-				gap: "16px",
-				gridTemplateColumns: "1fr 1fr",
-			}}
-		>
+		<main class={styles.main}>
+			<h1 class="sr-only">Copagress</h1>
 			{markdown && (
 				<>
 					<MarkdownEditor
@@ -25,7 +21,7 @@ function App() {
 					<MarkdownView markdown={markdown} />
 				</>
 			)}
-		</div>
+		</main>
 	);
 }
 

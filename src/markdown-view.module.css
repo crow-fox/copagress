@@ -1,0 +1,114 @@
+.wrapper {
+	height: 100%;
+	overflow: auto;
+	border-left: 1px solid #d1d5db;
+	background: #f6f8fa;
+}
+
+.toolbar {
+	position: sticky;
+	top: 0;
+	padding: 12px 16px 8px;
+	background: #f6f8fa;
+	z-index: 2;
+}
+
+.projectSelect {
+	width: 100%;
+	padding: 6px 10px;
+	border: 1px solid #d0d7de;
+	border-radius: 6px;
+	background: #ffffff;
+	color: #111111;
+	font-size: 14px;
+}
+
+.project {
+	padding: 4px 16px 16px;
+}
+
+.status {
+	margin: 0 0 12px;
+	padding: 12px 12px 8px;
+	background: #ffffff;
+	border: 1px solid #d0d7de;
+	border-radius: 8px;
+	box-shadow: 0 1px 0 rgba(27, 31, 36, 0.04);
+}
+
+.statusHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 8px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.statusTitle {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 700;
+	color: #24292f;
+}
+
+.taskCount {
+	padding: 2px 8px;
+	border: 1px solid #d0d7de;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #4b5563;
+	background: #f9fafb;
+	white-space: nowrap;
+}
+
+.taskList {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	color: #24292f;
+}
+
+.taskItem {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 10px;
+	align-items: center;
+	margin: 0;
+	padding: 8px 2px;
+	border-bottom: 1px solid #f1f5f9;
+	line-height: 1.5;
+}
+
+.taskItem:last-child {
+	border-bottom: none;
+}
+
+.taskMarker {
+	width: 8px;
+	height: 8px;
+	border: 1px solid #6b7280;
+	border-radius: 999px;
+	background: #ffffff;
+}
+
+.taskName {
+	min-width: 0;
+	font-size: 14px;
+	color: #111111;
+	overflow-wrap: anywhere;
+}
+
+.taskMeta {
+	font-size: 11px;
+	color: #6b7280;
+	font-variant-numeric: tabular-nums;
+}
+
+.emptyTasks {
+	margin: 2px 0 4px;
+	font-size: 13px;
+	color: #6b7280;
+}
