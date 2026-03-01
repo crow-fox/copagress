@@ -1,12 +1,15 @@
-import { createRoot } from "remix/component";
-import type { RemixComponent } from "./util";
+import { render } from "preact";
 import "./global.css";
 
-const App: RemixComponent = () => {
-	return () => <div>Welcome to copagress!</div>;
-};
+function App() {
+	return (
+		<div>
+			<h1>Hello, Preact!</h1>
+		</div>
+	);
+}
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");
 
-createRoot(root).render(<App />);
+render(<App />, root);

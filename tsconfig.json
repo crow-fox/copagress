@@ -14,8 +14,9 @@
 		"moduleDetection": "force",
 		"noEmit": true,
 
+		/* Preact JSX */
 		"jsx": "react-jsx",
-		"jsxImportSource": "remix/component",
+		"jsxImportSource": "preact",
 
 		/* Linting */
 		"strict": true,
