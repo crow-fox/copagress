@@ -1,14 +1,17 @@
+import * as v from "valibot";
 import { UnreachableError } from "./util.ts";
 
 export function markdownContent(lines: string[]): string {
 	return lines.join("\n");
 }
 
+export const markdownSchema = v.object({
+	filename: v.string(),
+	content: v.string(),
+});
+
 // 入力となる Markdown ファイルの型
-export type Markdown = Readonly<{
-	filename: string;
-	content: string;
-}>;
+export type Markdown = v.InferOutput<typeof markdownSchema>;
 
 // Markdown -> MarkdownLine[]
 

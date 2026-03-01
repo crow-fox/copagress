@@ -22,6 +22,7 @@
 	},
 	"dependencies": {
 		"kiso.css": "^1.2.4",
-		"preact": "^10.28.4"
+		"preact": "^10.28.4",
+		"valibot": "^1.2.0"
 	}
 }
