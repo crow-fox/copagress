@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { type Doc, markdownContent, parseMarkdown } from "./markdown";
+import { type Doc, markdownContent, parseMarkdown } from "./markdown.ts";
 
 test("空のMarkdownをパースすると projects は空配列になる", () => {
 	const content = markdownContent([]);

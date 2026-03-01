@@ -1,4 +1,4 @@
-import { UnreachableError } from "./util";
+import { UnreachableError } from "./util.ts";
 
 export function markdownContent(lines: string[]): string {
 	return lines.join("\n");
