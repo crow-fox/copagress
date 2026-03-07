@@ -5,6 +5,7 @@ import { basicSetup } from "codemirror";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Markdown } from "./markdown.ts";
 import styles from "./markdown-editor.module.css";
+import { debounce } from "./util.ts";
 
 type Props = {
 	initialValue: Markdown;
@@ -42,6 +43,8 @@ export function MarkdownEditor({ initialValue, onChange, onSave }: Props) {
 		const container = containerRef.current;
 		if (!container) return;
 
+		const debouncedOnChange = debounce(onChange, 300);
+
 		const state = EditorState.create({
 			doc: initMarkdown.content, // 初期値をpropsから受け取るように変更
 			extensions: [
@@ -65,7 +68,8 @@ export function MarkdownEditor({ initialValue, onChange, onSave }: Props) {
 				EditorView.updateListener.of((update) => {
 					if (!update.docChanged) return;
 					const next = update.state.doc.toString();
-					onChange({ filename: initMarkdown.filename, content: next });
+					// onChangeは頻繁に呼び出される可能性があるため、debounceして呼び出す
+					debouncedOnChange({ filename: initMarkdown.filename, content: next });
 				}),
 			],
 		});
