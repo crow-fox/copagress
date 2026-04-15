@@ -17,3 +17,21 @@ updates:
       semver-major-days: 30
       semver-minor-days: 7
       semver-patch-days: 3
+    groups:
+      dependencies:
+        patterns:
+          - "preact"
+          - "@codemirror/lang-markdown"
+          - "@codemirror/state"
+          - "@codemirror/view"
+          - "codemirror"
+          - "kiso.css"
+          - "valibot"
+      dev-dependencies:
+        patterns:
+          - "@biomejs/biome"
+          - "@preact/preset-vite"
+          - "@vitest/browser-playwright"
+          - "typescript"
+          - "vite"
+          - "vitest"
