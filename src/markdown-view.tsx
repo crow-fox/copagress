@@ -28,7 +28,8 @@ export function MarkdownView({ markdown }: Props) {
 	}, [projectOptions, selectedProjectName]);
 
 	const selectedProject =
-		doc.projects.find((project) => project.name === selectedProjectName) ?? null;
+		doc.projects.find((project) => project.name === selectedProjectName) ??
+		null;
 
 	return (
 		<div className={styles.wrapper}>
