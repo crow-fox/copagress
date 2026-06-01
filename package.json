@@ -26,7 +26,7 @@
 		"@codemirror/view": "^6.42.1",
 		"codemirror": "^6.0.2",
 		"kiso.css": "^1.2.4",
-		"preact": "^10.29.1",
-		"valibot": "^1.4.0"
+		"preact": "^10.29.2",
+		"valibot": "^1.4.1"
 	}
 }
