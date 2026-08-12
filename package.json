@@ -13,12 +13,12 @@
 		"lint": "biome lint"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.5.2",
-		"@preact/preset-vite": "^2.10.5",
-		"@vitest/browser-playwright": "^4.1.9",
-		"typescript": "^6.0.3",
-		"vite": "^8.1.0",
-		"vitest": "^4.1.9"
+		"@biomejs/biome": "2.5.7",
+		"@preact/preset-vite": "^2.10.6",
+		"@vitest/browser-playwright": "^4.1.10",
+		"typescript": "^7.0.2",
+		"vite": "^8.2.0",
+		"vitest": "^4.1.10"
 	},
 	"dependencies": {
 		"@codemirror/lang-markdown": "^6.5.2",
